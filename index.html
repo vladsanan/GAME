@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15132e">
+<title>Сочный микс · Suika</title>
+<style>
+:root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #f5f7ee; background: #0e1026; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; height: 100svh; height: 100dvh; overflow: hidden; isolation: isolate; background: linear-gradient(145deg, #17112d, #0e1730 55%, #101426); }
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button:focus-visible, canvas:focus-visible { outline: 3px solid #e4f5b5; outline-offset: 4px; }
+button:disabled { cursor: default; opacity: .4; }
+.screen { position: absolute; inset: 0; }
+.tools { position: fixed; top: max(17px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); z-index: 30; display: flex; gap: 7px; }
+.icon { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #ffffff16; border-radius: 12px; background: #242d3bbb; color: #cbd5dc; font-size: 22px; backdrop-filter: blur(8px); }
+.icon svg { width: 18px; height: 18px; pointer-events: none; }
+#pause::before { content: ""; width: 10px; height: 12px; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+#pause.is-paused::before { width: 0; height: 0; border: 6px solid transparent; border-right: 0; border-left: 10px solid currentColor; }
+.menu-screen, .tutorial-screen { display: grid; place-items: center; padding: 72px 22px 26px; overflow-y: auto; }
+.menu-card, .tutorial-card { text-align: center; width: min(100%, 460px); margin: auto; }
+.kicker { color: #b7ce97; font-size: 9px; font-weight: 750; letter-spacing: 3px; }
+h1, h2, p { margin: 0; }
+.menu-card h1 { font-size: clamp(48px, 8vw, 76px); line-height: 1.02; letter-spacing: -3px; margin: 13px 0 17px; font-weight: 850; }
+.menu-card h1 span { color: #bce88f; }
+.menu-card p { color: #a0afbb; line-height: 1.8; font-size: 14px; }
+.menu-art { width: 280px; height: 216px; margin: 0 auto 13px; position: relative; isolation: isolate; }
+.menu-art::before { content: ""; position: absolute; inset: 9px 27px; border: 1px solid #c6ed9c14; border-radius: 50%; background: radial-gradient(circle, #a9d58819, transparent 67%); }
+.art-fruit { position: absolute; display: block; }
+.art-fruit img, .token img, .next-icon img, .tutorial-art img { width: 100%; height: 100%; display: block; object-fit: contain; }
+.hero-watermelon { width: 184px; height: 184px; left: 56px; top: 8px; transform: rotate(-13deg); animation: float 5s ease-in-out infinite; }
+.hero-orange { width: 88px; height: 88px; left: 3px; top: 116px; transform: rotate(-19deg); }
+.hero-berry { width: 78px; height: 78px; right: 0; top: 102px; transform: rotate(17deg); }
+.primary { display: block; border: 0; border-radius: 16px; padding: 19px 25px; width: min(100%, 320px); margin: 28px auto 0; font-weight: 850; font-size: 17px; letter-spacing: 1.5px; background: linear-gradient(120deg, #c5ee8e, #8ed36d); color: #20361f; box-shadow: 0 8px 35px #a3e27222, inset 0 1px #ffffff80; }
+.primary:hover { filter: brightness(1.07); }
+.menu-best { margin-top: 24px; font-size: 12px; color: #8c9da9; }
+.menu-best strong { color: #f7d584; font-weight: 700; }
+.skip { position: absolute; right: max(20px, env(safe-area-inset-right)); top: max(20px, env(safe-area-inset-top)); background: #28313c; border: 1px solid #ffffff10; color: #a3afbd; border-radius: 9px; font-size: 10px; letter-spacing: 1px; padding: 10px 13px; }
+.tutorial-card { max-width: 440px; }
+.step-label { font-size: 10px; color: #f4d778; letter-spacing: 2px; font-weight: 700; }
+.tutorial-card h2 { font-size: clamp(27px, 5vw, 37px); line-height: 1.15; letter-spacing: -1.2px; margin: 15px auto 14px; max-width: 380px; }
+.tutorial-card p { font-size: 14px; line-height: 1.85; color: #a6b6c3; max-width: 390px; margin: auto; min-height: 104px; }
+.tutorial-card .primary { background: linear-gradient(120deg, #ffe78a, #f2c34e); color: #483510; box-shadow: 0 8px 35px #f4cd581c, inset 0 1px #fff8; margin-top: 24px; }
+.dots { display: flex; gap: 7px; justify-content: center; margin-top: 23px; }
+.dots span { height: 5px; width: 21px; border-radius: 8px; background: #36424b; transition: background .2s; }
+.dots span.active { background: #f7d572; }
+.tutorial-art { width: 280px; height: 205px; margin: 0 auto 17px; position: relative; }
+.demo-glass { position: absolute; width: 162px; height: 154px; border: 2px solid #a0d8bd; border-top: 0; border-radius: 0 0 23px 23px; left: 59px; bottom: 6px; background: linear-gradient(0deg, #8ac4ac08, transparent); }
+.demo-glass::before { content: ""; position: absolute; top: 18px; left: 5px; right: 5px; border-top: 1px dashed #acc9bc55; }
+.demo-fruit { position: absolute; width: 58px; height: 58px; }
+.aim-fruit { width: 51px; height: 51px; top: 0; left: 162px; }
+.aim-line { position: absolute; top: 55px; bottom: 20px; left: 188px; border-left: 1px dashed #d3e6b650; }
+.aim-arrow { position: absolute; left: 100px; top: 7px; color: #d2e9a8; font-size: 28px; }
+.landed-fruit { left: 73px; bottom: 8px; width: 65px; height: 65px; transform: rotate(-20deg); }
+.merge-demo { display: flex; justify-content: center; align-items: center; gap: 6px; height: 205px; }
+.merge-demo .demo-fruit { position: static; width: 64px; height: 64px; }
+.merge-demo .result { width: 90px; height: 90px; }
+.merge-symbol { color: #f4da7e; font-size: 22px; }
+.danger-demo .demo-glass::before { border-color: #ff989a; border-width: 2px; }
+.danger-demo .melon { width: 131px; height: 131px; bottom: 8px; left: 76px; }
+.danger-demo .apple { width: 88px; height: 88px; bottom: 105px; left: 97px; transform: rotate(-10deg); }
+.demo-timer { position: absolute; top: 40px; right: 0; border: 1px solid #ff9da844; color: #ffb6bd; background: #412c3c; padding: 7px 10px; border-radius: 9px; font-size: 13px; font-weight: 750; }
+.game-content { height: 100%; display: grid; grid-template-rows: calc(92px + env(safe-area-inset-top)) minmax(0, 1fr) calc(92px + env(safe-area-inset-bottom)); }
+.game-header { position: relative; padding: max(12px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 0; display: flex; align-items: start; justify-content: end; }
+.game-wordmark { position: absolute; top: calc(65px + env(safe-area-inset-top)); left: max(21px, env(safe-area-inset-left)); font-size: 8px; letter-spacing: 2px; font-weight: 700; color: #8a9d9d; }
+.hud { text-align: right; }
+.score-line { display: flex; justify-content: end; align-items: center; gap: 23px; }
+.counter { text-align: right; }
+.label { display: block; color: #8a9ea9; font-size: 8px; font-weight: 700; letter-spacing: 1.6px; }
+.counter strong { display: block; font-size: 27px; color: #fff; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.counter.best strong { color: #ffe08b; }
+.crown { font-size: 19px; vertical-align: 2px; margin-right: 4px; }
+.next { display: flex; justify-content: end; align-items: center; gap: 7px; height: 29px; }
+.next .label { color: #b4c2cb; font-size: 9px; letter-spacing: .8px; }
+.next-icon { display: block; height: 29px; width: 29px; }
+.play-area { min-width: 0; min-height: 0; display: grid; place-items: center; padding: 2px 12px 3px; overflow: hidden; }
+.arena { position: relative; aspect-ratio: 420 / 650; background: linear-gradient(160deg, #28224999, #101f386b); border: 1px solid #b6a5f526; border-radius: 22px; overflow: hidden; touch-action: none; box-shadow: 0 10px 50px #0002; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.evolution-bar { padding: 3px 13px max(7px, env(safe-area-inset-bottom)); display: flex; align-items: center; flex-direction: column; }
+.status { height: 20px; flex-shrink: 0; color: #98b09c; font-size: 10px; text-align: center; white-space: nowrap; }
+.status.danger { color: #ffabb1; }
+.chain { width: min(100%, 600px); display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: clamp(2px, .8vw, 7px); padding: 7px 9px; border: 1px solid #d9efd20d; border-radius: 17px; background: #282c4866; }
+.chain-item { display: grid; place-items: center; min-width: 0; width: 100%; opacity: .58; transition: opacity .2s; }
+.chain-item.unlocked { opacity: 1; }
+.chain-item small { display: none; }
+.token { display: block; width: min(100%, 36px); height: auto; aspect-ratio: 1; border-radius: 50%; }
+.chain-item.current .token { outline: 2px solid #cbed9d; outline-offset: 1px; background: #c3e6a015; }
+.evolution-caption { margin-top: 4px; color: #788f96; font-size: 8px; letter-spacing: 1px; }
+.evolution-caption strong { color: #b3c79e; font-weight: 500; }
+.overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 65px 22px 25px; background: #101a23df; backdrop-filter: blur(12px); }
+.dialog { text-align: center; max-width: 330px; width: 100%; max-height: 100%; overflow-y: auto; }
+.emblem { font-size: 49px; margin-bottom: 18px; }
+.overline { color: #c0d59c; font-size: 9px; font-weight: 750; letter-spacing: 2px; }
+.dialog h2 { font-size: 33px; line-height: 1.1; letter-spacing: -1px; margin: 13px 0; }
+.dialog p { color: #a5b5be; font-size: 13px; line-height: 1.8; }
+.final-score { font-size: 59px; color: #e1f0bb; font-weight: 850; font-variant-numeric: tabular-nums; margin: 15px 0 2px; }
+.secondary { display: block; margin: 12px auto 0; border: 0; background: transparent; color: #97a9b4; font-size: 12px; padding: 10px 17px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@keyframes float { 50% { transform: translateY(-8px) rotate(-10deg); } }
+@media (max-width: 480px) {
+ .tools { left: max(12px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); gap: 5px; }
+ .icon { width: 34px; height: 34px; border-radius: 10px; font-size: 21px; }
+ .game-header { padding-right: max(13px, env(safe-area-inset-right)); }
+ .score-line { gap: 15px; }
+ .counter strong { font-size: 23px; }
+ .crown { font-size: 16px; }
+ .game-wordmark { left: 14px; font-size: 7px; letter-spacing: 1.6px; }
+ .next .label { font-size: 8px; }
+ .skip { top: max(17px, env(safe-area-inset-top)); right: 15px; font-size: 9px; }
+ .menu-screen, .tutorial-screen { padding: 73px 23px 25px; }
+ .menu-card h1 { font-size: 55px; }
+ .menu-card p { font-size: 13px; }
+ .tutorial-card p { font-size: 13px; }
+ .status { font-size: 9px; }
+}
+@media (max-height: 680px) {
+ .menu-art { height: 163px; transform: scale(.8); transform-origin: bottom center; margin-top: -25px; }
+ .menu-card h1 { font-size: 45px; margin-top: 8px; margin-bottom: 10px; }
+ .primary { padding: 15px 22px; margin-top: 19px; }
+ .menu-best { margin-top: 17px; }
+ .tutorial-art { height: 170px; transform: scale(.83); transform-origin: bottom center; margin-top: -26px; margin-bottom: 10px; }
+ .tutorial-card h2 { font-size: 26px; margin: 10px auto; }
+ .tutorial-card p { font-size: 12px; min-height: 85px; line-height: 1.7; }
+ .dots { margin-top: 16px; }
+ .game-content { grid-template-rows: calc(84px + env(safe-area-inset-top)) minmax(0, 1fr) calc(82px + env(safe-area-inset-bottom)); }
+ .game-wordmark { top: 65px; }
+ .token { width: min(100%, 28px); height: auto; }
+}
+
+/* Slowly transformed gradients and a fixed, small star field; no per-frame DOM work. */
+.atmosphere { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; contain: paint; }
+.nebula { position: absolute; inset: -20%; opacity: .65; background: radial-gradient(ellipse at 18% 24%, #7a3bc84a, transparent 48%), radial-gradient(ellipse at 81% 68%, #217db43d, transparent 48%), radial-gradient(ellipse at 50% 95%, #6a2d8c36, transparent 50%); animation: nebula-flow 32s ease-in-out infinite alternate; }
+.star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #c6d5ff; box-shadow: 0 0 5px #b7a4ff70; opacity: .15; animation: star-drift var(--duration) ease-in-out var(--delay) infinite alternate; }
+.page-hidden .nebula, .page-hidden .star { animation-play-state: paused; }
+@keyframes nebula-flow { to { transform: translate3d(5%, -4%, 0) rotate(7deg) scale(1.08); opacity: .9; } }
+@keyframes star-drift { 50% { opacity: .4; } to { transform: translate3d(12px, -25px, 0); opacity: .1; } }
+
+/* Initial loading screen stays above every view, including during its fade. */
+.splash-screen { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 28px; opacity: 1; transition: opacity 280ms ease; background: radial-gradient(ellipse at 25% 20%, #49307060, transparent 58%), radial-gradient(ellipse at 85% 80%, #164a7155, transparent 55%), #101426; }
+.splash-screen::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .22; background-image: radial-gradient(circle, #c4d9ff 1px, transparent 1px); background-size: 87px 103px; mask-image: linear-gradient(transparent, #000, transparent); }
+.splash-screen.is-leaving { opacity: 0; }
+.splash-card { position: relative; text-align: center; width: min(100%, 310px); }
+.splash-art { position: relative; display: grid; place-items: center; height: 230px; margin-bottom: 23px; }
+.splash-art::before, .splash-art::after { content: ""; position: absolute; width: 205px; height: 205px; border-radius: 50%; border: 1px solid #b2ecc522; background: radial-gradient(circle, #75d99b14, transparent 70%); }
+.splash-art::after { width: 236px; height: 236px; border-color: #a19aff14; background: none; }
+.splash-fruit { display: block; position: relative; z-index: 1; width: 164px; height: 164px; font-size: 125px; line-height: 164px; filter: drop-shadow(0 10px 27px #6bdfad28); animation: splash-pulse 1.4s ease-in-out infinite; }
+.splash-fruit img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.splash-kicker { color: #aac798; font-size: 9px; letter-spacing: 3px; font-weight: 750; margin-bottom: 13px; }
+.splash-text { color: #d8e3e8; font-size: clamp(14px, 4vw, 17px); font-weight: 550; letter-spacing: .2px; animation: splash-text 1.6s ease-in-out infinite; }
+.splash-track { width: min(100%, 245px); height: 5px; margin: 29px auto 0; border-radius: 20px; background: #b7cbff12; box-shadow: inset 0 1px 2px #0004; overflow: hidden; }
+.splash-fill { height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; border-radius: inherit; background: linear-gradient(90deg, #a7d975, #aff0b8, #91e6ec); box-shadow: 0 0 14px #88e6c56b; }
+.splash-percent { margin-top: 12px; font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: 2px; color: #798ca2; }
+@keyframes splash-pulse { 0%, 100% { transform: scale(.96) rotate(-5deg); } 50% { transform: scale(1.04) rotate(0deg); } }
+@keyframes splash-text { 0%, 100% { opacity: .6; transform: translateY(1px); } 50% { opacity: 1; transform: translateY(-1px); } }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body data-screen="loading">
+<section class="splash-screen" id="splash" role="status" aria-live="polite" aria-labelledby="splash-label" aria-busy="true">
+ <div class="splash-card">
+  <div class="splash-art" aria-hidden="true"><span class="splash-fruit" data-fruit="9">🍉</span></div>
+  <div class="splash-kicker">СОЧНЫЙ МИКС / SUIKA</div>
+  <p class="splash-text" id="splash-label">Загрузка сочного микса...</p>
+  <div class="splash-track" id="splash-progress" role="progressbar" aria-label="Загрузка игры" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="splash-fill" id="splash-fill"></div></div>
+  <div class="splash-percent" id="splash-percent" aria-hidden="true">0%</div>
+ </div>
+</section>
+<div class="atmosphere" aria-hidden="true"><div class="nebula"></div><div id="starfield"></div></div>
+<div class="tools" id="tools" aria-label="Управление" inert>
+ <button class="icon" id="home" aria-label="В главное меню" title="В главное меню" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg></button>
+ <button class="icon" id="pause" aria-label="Пауза" title="Пауза (P)" hidden></button>
+ <button class="icon" id="sound" aria-label="Выключить звук" aria-pressed="true" title="Выключить звук">♫</button>
+</div>
+<main id="app-main" aria-busy="true" inert>
+ <section class="screen menu-screen" id="menu-screen" aria-labelledby="menu-title" hidden inert>
+  <div class="menu-card">
+   <div class="menu-art" aria-hidden="true"><span class="art-fruit hero-watermelon" data-fruit="9"></span><span class="art-fruit hero-orange" data-fruit="3"></span><span class="art-fruit hero-berry" data-fruit="1"></span></div>
+   <div class="kicker">10 ФРУКТОВ · ОДИН БОЛЬШОЙ АРБУЗ</div>
+   <h1 id="menu-title">Сочный <span>микс.</span></h1>
+   <p>Бросай, соединяй, удивляйся.<br>Каждая вишня — начало чего-то большого.</p>
+   <button class="primary" id="menu-play">ИГРАТЬ</button>
+   <div class="menu-best">Твой рекорд <strong>👑 <span id="menu-best">0</span></strong></div>
+  </div>
+ </section>
+ <section class="screen tutorial-screen" id="tutorial-screen" aria-labelledby="tutorial-title" hidden inert>
+  <button class="skip" id="skip-tutorial">ПРОПУСТИТЬ</button>
+  <div class="tutorial-card">
+   <div class="tutorial-art" id="tutorial-art" aria-hidden="true"></div>
+   <div class="step-label" id="step-label">ПРАВИЛО 1 ИЗ 3</div>
+   <h2 id="tutorial-title"></h2>
+   <p id="tutorial-text"></p>
+   <button class="primary" id="tutorial-next">ДАЛЬШЕ</button>
+   <div class="dots" id="tutorial-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+  </div>
+ </section>
+ <section class="screen game-screen" id="game-screen" aria-label="Игра Суика" hidden inert>
+  <div class="game-content" id="game-content">
+   <header class="game-header">
+    <span class="game-wordmark">СОЧНЫЙ МИКС / SUIKA</span>
+    <section class="hud" aria-label="Счёт и следующий фрукт">
+     <div class="score-line">
+      <div class="counter"><span class="label">СЧЁТ</span><strong id="score">0</strong></div>
+      <div class="counter best"><span class="label">РЕКОРД</span><strong><span class="crown" aria-hidden="true">👑</span><span id="best">0</span></strong></div>
+     </div>
+     <div class="next"><span class="label">СЛЕДУЮЩИЙ:</span><span class="next-icon" id="next-icon" aria-hidden="true"></span><span id="next-name" class="sr-only">Вишня</span></div>
+    </section>
+   </header>
+   <div class="play-area" id="play-area"><div class="arena" id="arena"><canvas id="game" tabindex="0" aria-label="Двигайте фрукт мышью, пальцем или стрелками. Нажмите или отпустите палец, чтобы сбросить. Пробел — сбросить фрукт."></canvas></div></div>
+   <footer class="evolution-bar">
+    <div class="status" id="status">Двигай фрукт и нажми, чтобы сбросить</div>
+    <div class="chain" id="chain" aria-label="Эволюция: Вишня, Клубника, Виноград, Апельсин, Яблоко, Персик, Ананас, Дыня, Тыква, Арбуз"></div>
+    <div class="evolution-caption">ЛУЧШИЙ ФРУКТ: <strong id="discovery-name">Вишня</strong></div>
+   </footer>
+  </div>
+  <div class="overlay" id="overlay" hidden><section class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"></section></div>
+ </section>
+</main>
+<div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+const splashStartedAt = performance.now();
+const $ = id => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+const W = 420, H = 650, TAU = Math.PI * 2;
+const BOX = Object.freeze({ left: 29, right: 391, top: 142, bottom: 618, line: 158 });
+const STEP = 1 / 120, GRAVITY = 1120, OVERFLOW_LIMIT = 2.5;
+const PHYSICS = Object.freeze({iterations: 8, friction: .025, airDrag: .035, floorDrag: 1.8, maxMergeKick: 85});
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FRUITS = [
+ { kind: 'cherry', name: 'Вишня', r: 14, color: '#e8194c', light: '#ff5479', dark: '#980d37' },
+ { kind: 'strawberry', name: 'Клубника', r: 20, color: '#ff3b95', light: '#ff7cbd', dark: '#bf1963' },
+ { kind: 'grape', name: 'Виноград', r: 27, color: '#9145ff', light: '#b57aff', dark: '#55219a' },
+ { kind: 'orange', name: 'Апельсин', r: 35, color: '#ff8a14', light: '#ffbd48', dark: '#be4c0b' },
+ { kind: 'apple', name: 'Яблоко', r: 45, color: '#a0e72b', light: '#d0fa65', dark: '#5c9f10' },
+ { kind: 'peach', name: 'Персик', r: 56, color: '#ff959d', light: '#ffd2b9', dark: '#d75d82' },
+ { kind: 'pineapple', name: 'Ананас', r: 68, color: '#ffd526', light: '#fff27b', dark: '#c08c0c' },
+ { kind: 'melon', name: 'Дыня', r: 81, color: '#dfbd78', light: '#f9e3ab', dark: '#a1844b' },
+ { kind: 'pumpkin', name: 'Тыква', r: 96, color: '#e7a027', light: '#ffcf6b', dark: '#a35b20' },
+ { kind: 'watermelon', name: 'Арбуз', r: 112, color: '#147a49', light: '#38ad70', dark: '#084e30' }
+];
+const LAST_LEVEL = FRUITS.length - 1;
+let tutorialStep = 0;
+let state = 'loading', fruits = [], particles = [], rings = [], labels = [];
+let score = 0, best = 0, maxLevel = 0, serial = 0, current = 0, next = 0;
+let aimX = W / 2, cooldown = 0, danger = 0, warned = false, pointerId = null;
+let lastTime = 0, accumulator = 0, hudClock = 0, saveClock = 0, bestDirty = false;
+const keys = new Set(), sprites = [], spriteURLs = [];
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+try { const n = Number(localStorage.getItem('suika-mix-best')); if (Number.isFinite(n)) best = Math.max(0, n); } catch {}
+
+// Locally synthesized effects. Short voices and impact throttling keep audio light.
+let audio = null, master = null, muted = false;
+const lastSound = {};
+try { muted = localStorage.getItem('suika-mix-muted') === 'true'; } catch {}
+function initAudio() {
+ if (muted) return;
+ try {
+  if (!audio) {
+   const A = window.AudioContext || window.webkitAudioContext;
+   if (!A) return;
+   audio = new A(); master = audio.createGain(); master.gain.value = .17; master.connect(audio.destination);
+  }
+  if (audio.state === 'suspended') audio.resume().catch(() => {});
+ } catch {}
+}
+function sound(kind, tier = 0) {
+ if (muted || !audio || audio.state !== 'running') return;
+ const now = audio.currentTime;
+ const spacing = kind === 'impact' ? .085 : kind === 'merge' ? .04 : 0;
+ if (now - (lastSound[kind] ?? -10) < spacing) return;
+ lastSound[kind] = now;
+ const root = 450 + Math.min(tier, LAST_LEVEL) * 38;
+ const notes = { drop: [310], impact: [200 + Math.random() * 85], merge: [root, root * 1.25, root * 1.5], over: [330, 262, 196], restart: [392, 523, 784] }[kind] || [];
+ notes.forEach((freq, i) => {
+  const at = now + i * .055, o = audio.createOscillator(), g = audio.createGain();
+  const duration = kind === 'impact' ? .075 : kind === 'drop' ? .11 : .2;
+  o.type = 'sine'; o.frequency.setValueAtTime(freq, at);
+  o.frequency.exponentialRampToValueAtTime(freq * (kind === 'impact' ? .45 : .82), at + duration);
+  g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.4, at + .006); g.gain.exponentialRampToValueAtTime(.001, at + duration);
+  o.connect(g); g.connect(master); o.start(at); o.stop(at + duration + .01);
+  o.onended = () => { o.disconnect(); g.disconnect(); };
+ });
+}
+function soundButton() {
+ const b = $('sound'); b.textContent = muted ? '♪' : '♫'; b.style.opacity = muted ? '.45' : '1';
+ b.setAttribute('aria-pressed', String(!muted)); b.title = muted ? 'Включить звук' : 'Выключить звук'; b.setAttribute('aria-label', b.title);
+}
+$('sound').onclick = () => {
+ muted = !muted; if (master) master.gain.value = muted ? 0 : .17;
+ try { localStorage.setItem('suika-mix-muted', String(muted)); } catch {}
+ soundButton();
+ if (!muted) { initAudio(); if (audio) audio.resume().then(() => sound('drop')).catch(() => {}); }
+};
+function saveBest() {
+ if (!bestDirty) return;
+ try { localStorage.setItem('suika-mix-best', String(best)); bestDirty = false; } catch {}
+}
+
+// Cached vector artwork gives every tier the same saturated color on all browsers.
+// Both the physics scene and UI use these sprites; no external images or emoji rendering.
+function buildSprites() {
+ sprites.length = 0; spriteURLs.length = 0;
+ FRUITS.forEach(f => {
+  const image = document.createElement('canvas'), size = (f.r * 2 + 12) * 2;
+  image.width = image.height = size;
+  const c = image.getContext('2d'), r = f.r;
+  c.scale(2, 2); c.translate(r + 6, r + 6);
+  const gradient = c.createLinearGradient(-r * .5, -r, r * .5, r);
+  gradient.addColorStop(0, f.light); gradient.addColorStop(.42, f.color); gradient.addColorStop(1, f.dark);
+  c.fillStyle = gradient; c.shadowColor = f.color; c.shadowBlur = 4;
+  c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill(); c.shadowBlur = 0;
+  c.strokeStyle = f.light; c.lineWidth = 2; c.stroke();
+  c.save(); c.beginPath(); c.arc(0, 0, r - 1.5, 0, TAU); c.clip();
+  if (f.kind === 'strawberry') {
+   // Strawberry seeds, kept clear of the face.
+   c.fillStyle = '#ffd892';
+   for (const [x, y] of [[-.63,-.3],[.6,-.29],[-.52,.3],[.53,.35],[-.25,-.46],[.23,-.42],[-.2,.68],[.22,.7]]) {
+    c.beginPath(); c.ellipse(x*r, y*r, r*.035, r*.065, x*.5, 0, TAU); c.fill();
+   }
+  } else if (f.kind === 'grape') {
+   c.strokeStyle = '#d3a3ff90'; c.lineWidth = Math.max(1, r * .035);
+   for (const [x,y] of [[-.55,-.29],[.53,-.27],[-.45,.51],[.43,.5],[0,-.61]]) {
+    c.beginPath(); c.arc(x*r, y*r, r*.26, 0, TAU); c.stroke();
+   }
+  } else if (f.kind === 'orange') {
+   c.fillStyle = '#ffe29d66';
+   for (let i=0; i<32; i++) {
+    const a=i*2.39996, d=Math.sqrt((i+.5)/32)*r*.88;
+    c.beginPath(); c.arc(Math.cos(a)*d, Math.sin(a)*d, Math.max(.65,r*.014), 0, TAU); c.fill();
+   }
+  } else if (f.kind === 'pineapple') {
+   c.strokeStyle = '#9d6c2570'; c.lineWidth = Math.max(1, r*.022);
+   for (let y=-r*2; y<r*2; y+=r*.34) {
+    c.beginPath(); c.moveTo(-r,y); c.lineTo(r,y+r*1.5); c.moveTo(-r,y); c.lineTo(r,y-r*1.5); c.stroke();
+   }
+  } else if (f.kind === 'peach') {
+   c.strokeStyle = '#b95a7870'; c.lineWidth = r*.03;
+   c.beginPath(); c.moveTo(0,-r*.77); c.bezierCurveTo(r*.15,-r*.2,r*.15,r*.4,0,r*.84); c.stroke();
+   c.fillStyle = '#ffcead88';
+   for(const x of [-.46,.46]) {c.beginPath(); c.ellipse(x*r,r*.2,r*.12,r*.07,0,0,TAU); c.fill()}
+  } else if (f.kind === 'melon' || f.kind === 'pumpkin') {
+   c.strokeStyle = f.kind === 'pumpkin' ? '#9f551a80' : '#fff0c680'; c.lineWidth = r*.035;
+   for (const x of [-.72,-.37,0,.37,.72]) {
+    c.beginPath(); c.moveTo(x*r,-r); c.bezierCurveTo(x*r-r*.17,-r*.4,x*r-r*.17,r*.4,x*r,r); c.stroke();
+   }
+  } else if (f.kind === 'watermelon') {
+   // Curving green stripes are painted into the actual ball, not just its icon.
+   c.strokeStyle = '#75b848'; c.lineWidth = r*.11;
+   for (const x of [-.85,-.5,-.15,.2,.55,.9]) {
+    c.beginPath(); c.moveTo(x*r,-r*1.1);
+    c.bezierCurveTo(x*r-r*.15,-r*.5,x*r+r*.16,r*.4,x*r-r*.05,r*1.1); c.stroke();
+   }
+  }
+  c.restore();
+  if (['cherry','strawberry','orange','apple','peach','pineapple','pumpkin'].includes(f.kind)) {
+   // Leaves and stems remain inside the circular collision silhouette.
+   c.strokeStyle = '#4f7830'; c.lineWidth = Math.max(1.4, r*.055); c.lineCap = 'round';
+   c.beginPath(); c.moveTo(0,-r*.62); c.quadraticCurveTo(r*.09,-r*.85,r*.03,-r*.91); c.stroke();
+   const leaves = f.kind === 'strawberry' || f.kind === 'pineapple' ? 5 : 1;
+   for (let i=0; i<leaves; i++) {
+    c.save(); c.translate(0,-r*.65); c.rotate(leaves===1?-.55:(i-(leaves-1)/2)*.55);
+    c.fillStyle = i%2?'#4b9d42':'#358047'; c.strokeStyle='#94d568'; c.lineWidth=Math.max(.6,r*.012);
+    c.beginPath(); c.moveTo(0,0); c.quadraticCurveTo(-r*.17,-r*.18,0,-r*.3); c.quadraticCurveTo(r*.17,-r*.18,0,0); c.fill(); c.stroke(); c.restore();
+   }
+  }
+  // Small, high-contrast faces and a controlled specular highlight.
+  const face = ['cherry','strawberry','grape','watermelon'].includes(f.kind) ? '#fff6e3' : '#354020';
+  c.fillStyle = face;
+  for (const x of [-.23,.23]) { c.beginPath(); c.arc(x*r,r*.035,Math.max(1.2,r*.055),0,TAU); c.fill(); }
+  c.strokeStyle=face; c.lineWidth=Math.max(1.2,r*.03); c.lineCap='round';
+  c.beginPath(); c.arc(0,r*.13,r*.13,0,Math.PI); c.stroke();
+  c.fillStyle='#ffffff85'; c.beginPath(); c.ellipse(-r*.36,-r*.46,r*.2,r*.075,-.65,0,TAU); c.fill();
+  c.fillStyle='#ffffffa0'; c.beginPath(); c.arc(-r*.54,-r*.22,Math.max(1,r*.035),0,TAU); c.fill();
+  c.strokeStyle='#ffffff35'; c.lineWidth=Math.max(.8,r*.014); c.beginPath(); c.arc(0,0,r*.91,Math.PI*1.06,Math.PI*1.8); c.stroke();
+  sprites.push(image); spriteURLs.push(image.toDataURL('image/png'));
+ });
+}
+function setFruitIcon(element, level) {
+ if (element.dataset.level === String(level)) return;
+ element.dataset.level = String(level);
+ const image = document.createElement('img'); image.src = spriteURLs[level]; image.alt = ''; image.draggable = false;
+ element.replaceChildren(image);
+}
+function buildChain() {
+ $('chain').replaceChildren();
+ $('chain').setAttribute('aria-label', 'Эволюция: ' + FRUITS.map(f => f.name).join(', '));
+ FRUITS.forEach((f, i) => {
+  const item = document.createElement('div'); item.className = 'chain-item'; item.title = `${i + 1}. ${f.name}`;
+  const token = document.createElement('span'); token.className = 'token'; setFruitIcon(token, i);
+  const name = document.createElement('small'); name.textContent = f.name;
+  item.setAttribute('aria-label', `${i + 1}. ${f.name}`); item.append(token, name); $('chain').append(item);
+ });
+}
+function updateHUD() {
+ $('score').textContent = formatScore(score); $('best').textContent = formatScore(best); $('score').title = score.toLocaleString('ru'); $('best').title = best.toLocaleString('ru');
+ const upcoming = FRUITS[next]; $('next-name').textContent = upcoming.name; setFruitIcon($('next-icon'), next);
+ $('chain').querySelectorAll('.chain-item').forEach((el, i) => { el.classList.toggle('unlocked', i <= maxLevel); el.classList.toggle('current', i === maxLevel); if(i === maxLevel) el.setAttribute('aria-current','step'); else el.removeAttribute('aria-current'); });
+ $('discovery-name').textContent = FRUITS[maxLevel].name; $('menu-best').textContent = best.toLocaleString('ru');
+ $('pause').classList.toggle('is-paused', state === 'paused'); $('pause').disabled = !['playing','paused'].includes(state); $('pause').setAttribute('aria-label', state === 'paused' ? 'Продолжить' : 'Пауза');
+ $('status').classList.toggle('danger', danger > .12);
+ if (state === 'over') $('status').textContent = 'Стакан переполнен. Попробуем ещё?';
+ else if (state === 'paused') $('status').textContent = 'Пауза — фрукты тоже отдыхают';
+ else if (danger > .12) $('status').textContent = `Слишком высоко! До переполнения: ${(OVERFLOW_LIMIT - danger).toFixed(1)} с`;
+ else $('status').textContent = maxLevel === LAST_LEVEL ? 'Арбуз собран! Продолжай свой сочный микс 🍉' : 'Двигай фрукт и нажми, чтобы сбросить';
+}
+// Explicit screens keep gameplay and input stopped throughout the tutorial.
+const RULES = [
+ {
+  title: 'Прицелься и отпусти',
+  text: 'Двигай фрукт мышью или пальцем влево-вправо. Нажми или отпусти палец, чтобы сбросить его в стакан. На клавиатуре — стрелки и пробел.',
+  art: '<div class="demo-glass"></div><div class="aim-line"></div><span class="aim-arrow">↔</span><span class="demo-fruit aim-fruit" data-fruit="0"></span><span class="demo-fruit landed-fruit" data-fruit="1"></span>'
+ },
+ {
+  title: 'Два одинаковых — один побольше',
+  text: 'Когда одинаковые фрукты касаются друг друга, они сливаются и приносят очки. Пройди всю цепочку из десяти фруктов — от вишни до арбуза.',
+  art: '<div class="merge-demo"><span class="demo-fruit" data-fruit="0"></span><span class="merge-symbol">+</span><span class="demo-fruit" data-fruit="0"></span><span class="merge-symbol">→</span><span class="demo-fruit result" data-fruit="1"></span></div>'
+ },
+ {
+  title: 'Не переполни стакан',
+  text: 'Если фрукт лежит выше пунктирной линии дольше 2,5 секунды, игра заканчивается. Падающие фрукты не считаются. Ищи слияния, чтобы освободить место!',
+  art: '<div class="danger-demo"><div class="demo-glass"></div><span class="demo-fruit melon" data-fruit="9"></span><span class="demo-fruit apple" data-fruit="4"></span><span class="demo-timer">2,5 с</span></div>'
+ }
+];
+// One splash per page load. The existing animation loop also drives its progress.
+const SPLASH_DURATION = 1800, SPLASH_FADE = reduced ? 0 : 280;
+let splashFading = false, splashFadeAt = 0, splashPercent = -1;
+function updateSplash(time) {
+ const progress = clamp((time-splashStartedAt)/(SPLASH_DURATION-SPLASH_FADE),0,1);
+ const percent = Math.floor(progress*100);
+ $('splash-fill').style.transform = `scaleX(${progress})`;
+ if(percent !== splashPercent) {
+  splashPercent = percent; $('splash-percent').textContent = `${percent}%`;
+  $('splash-progress').setAttribute('aria-valuenow',String(percent));
+ }
+ if(progress === 1 && !splashFading) {
+  splashFading = true; splashFadeAt = time;
+  // Prepare the menu underneath; its controls remain inert until the fade ends.
+  setScreen('menu'); updateHUD(); $('splash').classList.add('is-leaving');
+ }
+ if(splashFading && time-splashFadeAt >= SPLASH_FADE) {
+  $('splash').hidden = true; $('splash').inert = true; $('splash').setAttribute('aria-busy','false');
+  $('app-main').inert = false; $('app-main').setAttribute('aria-busy','false'); $('tools').inert = false;
+  showMenu();
+ }
+}
+function formatScore(n) {
+ return n < 100000 ? n.toLocaleString('ru') : new Intl.NumberFormat('ru', {notation:'compact',maximumFractionDigits:1}).format(n);
+}
+function setScreen(name) {
+ document.body.dataset.screen = name;
+ for (const screen of ['menu','tutorial','game']) {
+  const element = $(screen + '-screen'); element.hidden = screen !== name; element.inert = screen !== name;
+ }
+ $('home').hidden = name === 'menu'; $('pause').hidden = name !== 'game';
+ keys.clear(); pointerId = null; accumulator = 0; lastTime = 0;
+ if(name === 'game') resize();
+}
+function showMenu() {
+ saveBest(); state = 'menu'; $('overlay').hidden = true; $('game-content').inert = false;
+ setScreen('menu'); updateHUD(); $('menu-play').focus({preventScroll:true});
+}
+function showTutorial(step = 0) {
+ state = 'tutorial'; tutorialStep = step; setScreen('tutorial');
+ const rule = RULES[step];
+ $('step-label').textContent = `ПРАВИЛО ${step + 1} ИЗ 3`;
+ $('tutorial-title').textContent = rule.title; $('tutorial-text').textContent = rule.text;
+ $('tutorial-art').innerHTML = rule.art;
+ $('tutorial-art').querySelectorAll('[data-fruit]').forEach(el => setFruitIcon(el, Number(el.dataset.fruit)));
+ $('tutorial-next').textContent = step === RULES.length - 1 ? 'ПОЕХАЛИ' : 'ДАЛЬШЕ';
+ $('tutorial-dots').querySelectorAll('span').forEach((el,i) => el.classList.toggle('active',i === step));
+ $('announcement').textContent = `Правило ${step + 1} из 3. ${rule.title}. ${rule.text}`;
+ $('tutorial-next').focus({preventScroll:true});
+}
+function startGame() {
+ initAudio(); resetGame(); setScreen('game'); canvas.focus({preventScroll:true});
+ $('announcement').textContent = 'Игра началась. Соединяй одинаковые фрукты и собери арбуз!';
+}
+$('menu-play').onclick = () => {initAudio(); showTutorial()};
+$('tutorial-next').onclick = () => tutorialStep < RULES.length - 1 ? showTutorial(tutorialStep + 1) : startGame();
+$('skip-tutorial').onclick = startGame;
+$('home').onclick = showMenu;
+
+function randomSmallFruit() {
+ const n = Math.random(); return n < .33 ? 0 : n < .61 ? 1 : n < .83 ? 2 : n < .96 ? 3 : 4;
+}
+function makeFruit(level, x, y, vx = 0, vy = 0) {
+ const r = FRUITS[level].r;
+ return { id: ++serial, level, r, invMass: 1 / (r * r), x, y, vx, vy, angle: (Math.random() - .5) * .25, age: 0, mergeDelay: .08, overflow: 0, supports: 0, supportNX: 0, balanceTime: 0 };
+}
+function setAim(x) {
+ const r = FRUITS[current].r; aimX = clamp(x, BOX.left + r + 2, BOX.right - r - 2);
+}
+function drop() {
+ if (state !== 'playing' || cooldown > 0) return false;
+ initAudio(); setAim(aimX);
+ fruits.push(makeFruit(current, aimX, 77, 0, 25)); maxLevel = Math.max(maxLevel, current);
+ current = next; next = randomSmallFruit(); cooldown = .43; setAim(aimX); sound('drop'); updateHUD();
+ return true;
+}
+function resetGame() {
+ fruits = []; particles = []; rings = []; labels = []; serial = 0; score = 0; maxLevel = 0;
+ current = 0; next = randomSmallFruit(); aimX = W / 2; cooldown = 0; danger = 0; warned = false;
+ accumulator = 0; lastTime = 0; state = 'playing'; keys.clear(); pointerId = null;
+ $('overlay').hidden = true; $('game-content').inert = false; updateHUD();
+}
+function showDialog(content) {
+ $('dialog').innerHTML = content; $('overlay').hidden = false; $('game-content').inert = true; keys.clear(); pointerId = null; updateHUD();
+ $('dialog').querySelector('button')?.focus({ preventScroll: true });
+}
+function gameOver() {
+ if (state !== 'playing') return;
+ state = 'over'; saveBest(); sound('over');
+ showDialog(`<div class="emblem">🍒</div><div class="overline">ЕЩЁ ОДИН СОЧНЫЙ РАУНД?</div><h2 id="dialog-title">Полный стакан!</h2><p>Фрукты задержались выше линии.<br>Но следующий арбуз уже близко.</p><div class="final-score">${score.toLocaleString('ru')}</div><p>Рекорд: ${best.toLocaleString('ru')} · Лучший фрукт: ${FRUITS[maxLevel].name}</p><button class="primary" id="play-again">Играть снова</button><button class="secondary" id="back-menu">В главное меню</button>`);
+ $('play-again').onclick = restartGame; $('back-menu').onclick = showMenu;
+ $('announcement').textContent = `Игра окончена. Счёт ${score}.`;
+}
+function togglePause() {
+ if (state === 'playing') {
+  state = 'paused';
+  showDialog('<div class="emblem">🍓</div><div class="overline">НИКАКОЙ СПЕШКИ</div><h2 id="dialog-title">Фруктовая пауза.</h2><p>Выдохни. Твой стакан подождёт.</p><button class="primary" id="resume">Продолжить</button><button class="secondary" id="reset">Начать заново</button>');
+  $('resume').onclick = togglePause; $('reset').onclick = restartGame;
+ } else if (state === 'paused') {
+  state = 'playing'; accumulator = 0; lastTime = 0; $('overlay').hidden = true; $('game-content').inert = false; updateHUD(); canvas.focus({ preventScroll: true });
+ }
+}
+$('pause').onclick = togglePause;
+function restartGame() {
+ saveBest(); startGame();
+ if (!muted && audio) audio.resume().then(() => sound('restart')).catch(() => {});
+}
+
+// Circle physics: small fixed steps, mass-weighted positional correction and impulses.
+function confine(f, dt = 0) {
+ if (f.x - f.r < BOX.left) { f.x = BOX.left + f.r; if (f.vx < 0) f.vx *= -.24; }
+ if (f.x + f.r > BOX.right) { f.x = BOX.right - f.r; if (f.vx > 0) f.vx *= -.24; }
+ if (f.y + f.r > BOX.bottom) {
+  f.y = BOX.bottom - f.r;
+  if (f.vy > 0) { if (f.vy > 100) sound('impact'); f.vy = f.vy > 70 ? -f.vy * .15 : 0; }
+  f.vx *= Math.exp(-PHYSICS.floorDrag * dt);
+ }
+}
+function burst(x, y, level) {
+ const count = reduced ? 3 : 14;
+ for (let i = 0; i < count; i++) {
+  const a = Math.random() * TAU, speed = 25 + Math.random() * 115;
+  particles.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .35 + Math.random() * .25, color: FRUITS[level].color });
+ }
+ if (particles.length > 160) particles.splice(0, particles.length - 160);
+ rings.push({ x, y, r: FRUITS[level].r, life: .32, color: FRUITS[level].color });
+ if (rings.length > 20) rings.shift();
+}
+// Sum radial velocity impulses after removal, then cap their combined effect per body.
+// This is a one-off physical push, not a positional teleport or continuous shaking.
+function applyMergeImpulses(sources) {
+ for(const target of fruits) {
+  let kickX = 0, kickY = 0;
+  for(const source of sources) {
+   if(target.id === source.id) continue;
+   const dx = target.x-source.x, dy = target.y-source.y, d = Math.hypot(dx,dy);
+   const reach = 55+source.r*.5, gap = Math.max(0,d-source.r-target.r);
+   if(gap >= reach) continue;
+   const falloff = (1-gap/reach)**2;
+   const weight = clamp(Math.sqrt(source.r/target.r),.55,1.35);
+   const strength = (32+source.r*.16)*weight*falloff;
+   const angle = d>.001 ? Math.atan2(dy,dx) : target.id*2.39996;
+   kickX += Math.cos(angle)*strength; kickY += Math.sin(angle)*strength;
+  }
+  const length = Math.hypot(kickX,kickY), limit = length>0 ? Math.min(1,PHYSICS.maxMergeKick/length) : 0;
+  target.vx += kickX*limit; target.vy += kickY*limit;
+ }
+}
+function releaseBalancedFruit(f, dt) {
+ // A genuine two-sided support stays stable. Only a perfectly balanced single
+ // curved contact gets one tiny symmetry-breaking nudge, then gravity takes over.
+ const balanced = f.supports === 1 && Math.abs(f.supportNX)<.035 &&
+  Math.abs(f.vx)<4 && Math.abs(f.vy)<28 && f.age>.2 && f.y+f.r<BOX.bottom-1;
+ f.balanceTime = balanced ? f.balanceTime+dt : 0;
+ if(f.balanceTime>.12) {
+  const direction = Math.abs(f.supportNX)>.003 ? Math.sign(f.supportNX) : (f.id%2 ? 1 : -1);
+  f.vx += direction*10; f.balanceTime=0;
+ }
+}
+function mergePairs(pairs, removed) {
+ if (!pairs.length) return;
+ const born = [];
+ for (const [a, b] of pairs) {
+  const level = a.level + 1, r = FRUITS[level].r;
+  const x = clamp((a.x + b.x) / 2, BOX.left + r, BOX.right - r);
+  const y = Math.min(BOX.bottom - r, (a.y + b.y) / 2);
+  const fruit = makeFruit(level, x, y, clamp((a.vx + b.vx) * .5, -150, 150), Math.min(0, (a.vy + b.vy) * .5) - 25);
+  fruit.mergeDelay = .015; // Fast follow-up contacts preserve chain reactions after the push.
+  born.push(fruit);
+  const points = (level + 1) * (level + 2) / 2; score += points;
+  if (score > best) { best = score; bestDirty = true; }
+  if (level > maxLevel) {
+   maxLevel = level;
+   if (level === LAST_LEVEL) $('announcement').textContent = 'Ты собрал арбуз! Игра продолжается.';
+  }
+  burst(x, y, level); labels.push({ x, y: y - r * .3, text: `+${points}`, life: .8 });
+  sound('merge', level);
+ }
+ if (labels.length > 24) labels.splice(0, labels.length - 24);
+ fruits = fruits.filter(f => !removed.has(f.id)).concat(born); applyMergeImpulses(born); updateHUD();
+}
+function physics(dt) {
+ if (state !== 'playing') return;
+ cooldown = Math.max(0, cooldown - dt);
+ const direction = Number(keys.has('ArrowRight') || keys.has('KeyD')) - Number(keys.has('ArrowLeft') || keys.has('KeyA'));
+ if (direction) setAim(aimX + direction * 260 * dt);
+ for (const f of fruits) {
+  f.supports=0; f.supportNX=0;
+  f.age += dt; f.vy += GRAVITY * dt; f.vx *= Math.exp(-PHYSICS.airDrag * dt);
+  f.x += f.vx * dt; f.y += f.vy * dt; f.angle += f.vx / f.r * dt * .5;
+  confine(f, dt);
+ }
+ const removed = new Set(), pairs = [];
+ for (let pass = 0; pass < PHYSICS.iterations; pass++) {
+  for (let i = 0; i < fruits.length; i++) for (let j = i + 1; j < fruits.length; j++) {
+   const a = fruits[i], b = fruits[j];
+   let dx = b.x - a.x, dy = b.y - a.y, sum = a.r + b.r, d2 = dx * dx + dy * dy;
+   if (d2 > (sum + .4) ** 2) continue;
+   if (a.level === b.level && a.level < LAST_LEVEL && a.age >= a.mergeDelay && b.age >= b.mergeDelay && !removed.has(a.id) && !removed.has(b.id)) {
+    removed.add(a.id); removed.add(b.id); pairs.push([a, b]);
+   }
+   if (d2 < .000001) { dx = 0; dy = -1; d2 = 1; }
+   const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, mass = a.invMass + b.invMass;
+   if(pass === 0 && Math.abs(ny)>.35) {
+    const upper = dy>0 ? a : b;
+    upper.supports++; upper.supportNX += dy>0 ? -nx : nx;
+   }
+   const correction = Math.max(0, sum - d - .01) * .84 / mass;
+   a.x -= nx * correction * a.invMass; a.y -= ny * correction * a.invMass;
+   b.x += nx * correction * b.invMass; b.y += ny * correction * b.invMass;
+   const relativeX = b.vx - a.vx, relativeY = b.vy - a.vy, normalSpeed = relativeX * nx + relativeY * ny;
+   if (normalSpeed < 0) {
+    if (normalSpeed < -115 && pass === 0) sound('impact');
+    const bounce = normalSpeed < -80 ? .08 : 0;
+    const impulse = -(1 + bounce) * normalSpeed / mass;
+    a.vx -= impulse * nx * a.invMass; a.vy -= impulse * ny * a.invMass;
+    b.vx += impulse * nx * b.invMass; b.vy += impulse * ny * b.invMass;
+    const tangent = (relativeX * -ny + relativeY * nx), friction = clamp(-tangent / mass, -impulse * PHYSICS.friction, impulse * PHYSICS.friction);
+    a.vx -= friction * -ny * a.invMass; a.vy -= friction * nx * a.invMass;
+    b.vx += friction * -ny * b.invMass; b.vy += friction * nx * b.invMass;
+   }
+  }
+  for (const f of fruits) confine(f);
+ }
+ for(const f of fruits) if(!removed.has(f.id)) releaseBalancedFruit(f, dt);
+ mergePairs(pairs, removed);
+ danger = 0;
+ for (const f of fruits) {
+  // Falling fruit gets a grace period. Only fruit resting above the rim counts.
+  const restingAbove = f.age > .35 && f.y - f.r < BOX.line - 1 && Math.hypot(f.vx, f.vy) < 80;
+  f.overflow = restingAbove ? f.overflow + dt : 0;
+  danger = Math.max(danger, f.overflow);
+ }
+ if (danger > .12 && !warned) { warned = true; $('announcement').textContent = 'Осторожно: фрукты выше линии переполнения.'; }
+ if (danger <= .12) warned = false;
+ if (danger >= OVERFLOW_LIMIT) { gameOver(); return; }
+ for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 200 * dt; p.life -= dt; }
+ particles = particles.filter(p => p.life > 0);
+ for (const ring of rings) ring.life -= dt; rings = rings.filter(r => r.life > 0);
+ for (const label of labels) { label.y -= 42 * dt; label.life -= dt; } labels = labels.filter(l => l.life > 0);
+}
+
+// Activate touch controls on release without relying on a compatibility mouse click.
+// Suppress the ensuing synthetic click so a tutorial step advances exactly once.
+let touchPress = null, handledTouchUntil = 0;
+document.addEventListener('pointerdown', e => {
+ if(e.pointerType !== 'touch' || !e.isPrimary) return;
+ const button = e.target.closest('button');
+ touchPress = button && !button.disabled ? {button,id:e.pointerId,x:e.clientX,y:e.clientY} : null;
+});
+document.addEventListener('pointermove', e => {
+ if(touchPress?.id === e.pointerId && Math.hypot(e.clientX-touchPress.x,e.clientY-touchPress.y)>14) touchPress=null;
+});
+document.addEventListener('pointercancel', () => {touchPress=null});
+document.addEventListener('pointerup', e => {
+ const press = touchPress; if(!press || press.id !== e.pointerId) return;
+ touchPress=null;
+ if(e.target.closest('button') !== press.button || press.button.disabled) return;
+ handledTouchUntil=performance.now()+600; e.preventDefault(); press.button.click();
+});
+document.addEventListener('click', e => {
+ if(e.isTrusted && performance.now()<handledTouchUntil && (e.pointerType==='touch' || e.sourceCapabilities?.firesTouchEvents || (!('pointerType' in e) && e.detail>0))) {
+  e.preventDefault(); e.stopImmediatePropagation();
+ }
+},true);
+
+// Aim on hover, drag to aim on touch, release to drop. One release = one fruit.
+function aimFromPointer(e) { const rect = canvas.getBoundingClientRect(); setAim((e.clientX - rect.left) / rect.width * W); }
+canvas.addEventListener('pointerdown', e => {
+ if (state !== 'playing' || !e.isPrimary || e.button !== 0) return;
+ initAudio(); canvas.focus({ preventScroll: true }); pointerId = e.pointerId; aimFromPointer(e); canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => { if (state === 'playing' && (e.pointerType === 'mouse' || pointerId === e.pointerId)) aimFromPointer(e); });
+canvas.addEventListener('pointerup', e => { if (pointerId === e.pointerId) { pointerId = null; aimFromPointer(e); drop(); } });
+for (const name of ['pointercancel', 'lostpointercapture']) canvas.addEventListener(name, e => { if (pointerId === e.pointerId) pointerId = null; });
+document.addEventListener('keydown', e => {
+ const onButton = e.target.tagName === 'BUTTON';
+ if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code) && state === 'playing' && !onButton) { e.preventDefault(); keys.add(e.code); }
+ if (['Space', 'Enter'].includes(e.code) && !onButton && state === 'playing') { e.preventDefault(); if (!e.repeat) { initAudio(); drop(); } }
+ if (['KeyP', 'Escape'].includes(e.code) && !e.repeat) { e.preventDefault(); if(state === 'tutorial' && e.code === 'Escape') showMenu(); else togglePause(); }
+});
+document.addEventListener('keyup', e => keys.delete(e.code));
+window.addEventListener('blur', () => { keys.clear(); pointerId = null; if (state === 'playing') togglePause(); });
+document.addEventListener('visibilitychange', () => { document.body.classList.toggle('page-hidden',document.hidden); if (document.hidden) { keys.clear(); pointerId = null; if (state === 'playing') togglePause(); saveBest(); } });
+window.addEventListener('pagehide', saveBest);
+$('overlay').addEventListener('keydown', e => {
+ if(e.key !== 'Tab') return;
+ const buttons = [...$('dialog').querySelectorAll('button')], first = buttons[0], last = buttons.at(-1);
+ if(e.shiftKey && document.activeElement === first) {e.preventDefault(); last.focus()}
+ else if(!e.shiftKey && document.activeElement === last) {e.preventDefault(); first.focus()}
+});
+
+function resize() {
+ if($('game-screen').hidden) return;
+ const area = $('play-area'), availableW = Math.max(1, area.clientWidth - 24), availableH = Math.max(1, area.clientHeight - 5);
+ const scale = Math.min(availableW / W, availableH / H);
+ $('arena').style.width = `${W * scale}px`; $('arena').style.height = `${H * scale}px`;
+ const rect = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+ if(!rect.width || !rect.height) return;
+ canvas.width = Math.round(rect.width * dpr); canvas.height = Math.round(rect.height * dpr);
+}
+new ResizeObserver(resize).observe($('play-area'));
+function drawFruit(level, x, y, angle = 0, scale = 1, opacity = 1) {
+ const f = FRUITS[level], size = f.r * 2 + 12;
+ ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(scale, scale); ctx.globalAlpha = opacity;
+ ctx.drawImage(sprites[level], -size / 2, -size / 2, size, size); ctx.restore();
+}
+function draw() {
+ ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0); ctx.clearRect(0, 0, W, H);
+ ctx.fillStyle = '#d6e8d905'; ctx.beginPath(); ctx.roundRect(BOX.left, BOX.top, BOX.right - BOX.left, BOX.bottom - BOX.top, [0, 0, 18, 18]); ctx.fill();
+ const warning = danger > .12;
+ ctx.setLineDash([5, 7]); ctx.strokeStyle = warning ? '#ff9396' : '#b9c6c044'; ctx.lineWidth = 1.4;
+ ctx.beginPath(); ctx.moveTo(BOX.left + 5, BOX.line); ctx.lineTo(BOX.right - 5, BOX.line); ctx.stroke(); ctx.setLineDash([]);
+ ctx.font = '9px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = warning ? '#ffaaaa' : '#91a09d';
+ ctx.fillText(warning ? `ПЕРЕПОЛНЕНИЕ ЧЕРЕЗ ${(OVERFLOW_LIMIT - danger).toFixed(1)} с` : 'ЛИНИЯ ПЕРЕПОЛНЕНИЯ', W / 2, BOX.line - 12);
+ for (const f of fruits) {
+  const scale = reduced ? 1 : Math.min(1, .78 + f.age * 2.2);
+  drawFruit(f.level, f.x, f.y, f.angle, scale);
+ }
+ for (const p of particles) { ctx.globalAlpha = Math.min(1, p.life * 3); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
+ if (!reduced) for (const ring of rings) {
+  ctx.strokeStyle = ring.color; ctx.globalAlpha = ring.life / .32; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(ring.x, ring.y, ring.r + (1 - ring.life / .32) * 20, 0, TAU); ctx.stroke();
+ } ctx.globalAlpha = 1;
+ for (const label of labels) { ctx.globalAlpha = Math.min(1, label.life * 2); ctx.textAlign = 'center'; ctx.font = '800 22px system-ui'; ctx.fillStyle = '#fff7da'; ctx.fillText(label.text, label.x, label.y); } ctx.globalAlpha = 1;
+ // An open rim: no top collision surface, just side walls and a rounded bottom.
+ ctx.strokeStyle = '#9be3d1'; ctx.shadowColor = '#5ae2b5'; ctx.shadowBlur = 7; ctx.lineWidth = 3; ctx.lineCap = 'round';
+ ctx.beginPath(); ctx.moveTo(BOX.left, BOX.top); ctx.lineTo(BOX.left, BOX.bottom - 17); ctx.quadraticCurveTo(BOX.left, BOX.bottom, BOX.left + 17, BOX.bottom); ctx.lineTo(BOX.right - 17, BOX.bottom); ctx.quadraticCurveTo(BOX.right, BOX.bottom, BOX.right, BOX.bottom - 17); ctx.lineTo(BOX.right, BOX.top); ctx.stroke();
+ ctx.shadowBlur = 0; ctx.lineCap = 'butt';
+ if (state !== 'over') {
+  ctx.strokeStyle = '#dce8cd24'; ctx.setLineDash([3, 7]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(aimX, 83 + FRUITS[current].r); ctx.lineTo(aimX, BOX.bottom - 3); ctx.stroke(); ctx.setLineDash([]);
+  const ready = cooldown <= 0;
+  ctx.fillStyle = '#b9d99c'; ctx.beginPath(); ctx.moveTo(aimX - 4, 25); ctx.lineTo(aimX + 4, 25); ctx.lineTo(aimX, 31); ctx.fill();
+  drawFruit(current, aimX, 77, 0, ready ? 1 : .85, ready ? 1 : .4);
+ }
+}
+function frame(time) {
+ if(state === 'loading') updateSplash(time);
+ const dt = lastTime ? Math.min(.065, Math.max(0, (time - lastTime) / 1000)) : 0; lastTime = time;
+ if (state === 'playing') {
+  accumulator += dt;
+  while (accumulator >= STEP && state === 'playing') { physics(STEP); accumulator -= STEP; }
+  hudClock += dt; saveClock += dt;
+  if (hudClock >= .1) { hudClock = 0; updateHUD(); }
+  if (saveClock >= 2) { saveClock = 0; saveBest(); }
+ }
+ if(!$('game-screen').hidden) draw(); requestAnimationFrame(frame);
+}
+function buildAtmosphere() {
+ const fragment = document.createDocumentFragment();
+ for(let i=0;i<32;i++) {
+  const star=document.createElement('i'); star.className='star';
+  star.style.left=`${(i*37.7+3)%100}%`; star.style.top=`${(i*61.3+7)%100}%`;
+  star.style.setProperty('--duration',`${10+i%9}s`); star.style.setProperty('--delay',`-${i%13}s`);
+  fragment.append(star);
+ }
+ $('starfield').replaceChildren(fragment);
+}
+buildAtmosphere();
+buildSprites(); buildChain(); soundButton();
+document.querySelectorAll('[data-fruit]').forEach(el => setFruitIcon(el, Number(el.dataset.fruit)));
+next = randomSmallFruit(); updateHUD(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
